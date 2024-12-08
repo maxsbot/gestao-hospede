@@ -100,22 +100,22 @@ class Reserva(BaseModel):
     
     hospede_principal = models.ForeignKey(Pessoa, on_delete=models.PROTECT, related_name='reservas')
     plataforma = models.ForeignKey(Plataforma, on_delete=models.PROTECT)
-    codigo_confirmacao = models.CharField('Código de Confirmação', max_length=20, unique=True)
+    codigo_confirmacao = models.CharField('Código de Confirmação', max_length=50, unique=True, blank=True, null=True)
     data_reserva = models.DateField('Data da Reserva')
     data_entrada = models.DateField('Data de Entrada')
     data_saida = models.DateField('Data de Saída')
-    noites = models.IntegerField('Número de Noites', validators=[MinValueValidator(1)])
-    num_adultos = models.IntegerField('Número de Adultos', validators=[MinValueValidator(1)])
+    noites = models.IntegerField('Noites', default=0)
+    num_adultos = models.IntegerField('Número de Adultos', default=1)
     num_criancas = models.IntegerField('Número de Crianças', default=0, validators=[MinValueValidator(0)])
     
     # Campos financeiros
     valor_bruto = MoneyField('Valor Bruto', max_digits=10, decimal_places=2, default_currency='BRL')
-    taxa_servico = MoneyField('Taxa de Serviço', max_digits=10, decimal_places=2, default_currency='BRL')
-    taxa_limpeza = MoneyField('Taxa de Limpeza', max_digits=10, decimal_places=2, default_currency='BRL')
+    taxa_servico = MoneyField('Taxa de Serviço', max_digits=10, decimal_places=2, default_currency='BRL', default=0)
+    taxa_limpeza = MoneyField('Taxa de Limpeza', max_digits=10, decimal_places=2, default_currency='BRL', default=0)
     ganhos_brutos = MoneyField('Ganhos Brutos', max_digits=10, decimal_places=2, default_currency='BRL')
     impostos = MoneyField('Impostos', max_digits=10, decimal_places=2, default_currency='BRL', default=0)
     
-    status = models.CharField('Status', max_length=15, choices=STATUS_CHOICES, default='PENDENTE')
+    status = models.CharField('Status', max_length=15, choices=STATUS_CHOICES, default='CONFIRMADA')
     observacoes = models.TextField('Observações', blank=True, null=True)
     
     class Meta:

@@ -15,20 +15,30 @@ class AirbnbCSVImporter:
     Pode ser usada tanto via comando quanto via interface web.
     """
     
-    def __init__(self):
+    def __init__(self, is_pending: bool = False):
         self.plataforma, _ = Plataforma.objects.get_or_create(
             nome='Airbnb',
             defaults={'ativo': True}
         )
         self.erros: List[str] = []
         self.sucessos: List[str] = []
-    
+        self.is_pending = is_pending
+        self._codigo_counter = 1
+        
     def parse_date(self, date_str: str) -> Optional[datetime]:
         """Converte string de data do CSV para objeto datetime."""
-        try:
-            return datetime.strptime(date_str, '%d/%m/%Y').date()
-        except (ValueError, TypeError):
+        if not date_str:
             return None
+            
+        try:
+            # Tenta primeiro o formato MM/DD/YYYY
+            return datetime.strptime(date_str.strip(), '%m/%d/%Y').date()
+        except (ValueError, TypeError):
+            try:
+                # Se falhar, tenta o formato DD/MM/YYYY
+                return datetime.strptime(date_str.strip(), '%d/%m/%Y').date()
+            except (ValueError, TypeError):
+                return None
     
     def parse_decimal(self, value_str: str) -> Decimal:
         """Converte string de valor para Decimal."""
@@ -37,115 +47,108 @@ class AirbnbCSVImporter:
         except (ValueError, TypeError, AttributeError):
             return Decimal('0')
     
-    def process_pending_reservation(self, row: Dict) -> None:
-        """Processa uma linha do CSV de reservas pendentes."""
+    def generate_confirmation_code(self) -> str:
+        """Gera um código de confirmação único."""
+        while True:
+            codigo = f'AUTO{str(self._codigo_counter).zfill(6)}'
+            self._codigo_counter += 1
+            if not Reserva.objects.filter(codigo_confirmacao=codigo).exists():
+                return codigo
+
+    def process_reservation(self, row: Dict, status: str = 'CONFIRMADA') -> None:
+        """Processa uma linha do CSV."""
         try:
             with transaction.atomic():
+                # Verifica campos obrigatórios
+                required_fields = ['Data da reserva', 'Data de início', 'Data de término', 'Hóspede']
+                for field in required_fields:
+                    if not row.get(field):
+                        self.erros.append(f'Campo obrigatório não encontrado: {field}')
+                        return
+
                 # Cria ou obtém a pessoa
                 pessoa, _ = Pessoa.objects.get_or_create(
-                    nome=row['Hóspede']
+                    nome=row['Hóspede'].strip()
                 )
                 
-                # Verifica se a reserva já existe
-                codigo = row['Código de Confirmação']
-                if Reserva.objects.filter(codigo_confirmacao=codigo).exists():
-                    self.erros.append(f'Reserva {codigo} já existe no sistema')
+                # Pega ou gera o código de confirmação
+                codigo = row.get('Código de Confirmação', '').strip() or self.generate_confirmation_code()
+                    
+                # Processa as datas
+                data_reserva = self.parse_date(row['Data da reserva'])
+                data_entrada = self.parse_date(row['Data de início'])
+                data_saida = self.parse_date(row['Data de término'])
+                
+                if not all([data_reserva, data_entrada, data_saida]):
+                    self.erros.append(f'Data inválida para reserva {codigo}')
                     return
+
+                # Processa valores financeiros
+                valor_bruto = Money(self.parse_decimal(row.get('Valor', '0')), 'BRL')
                 
-                # Cria a reserva
-                Reserva.objects.create(
-                    hospede_principal=pessoa,
-                    plataforma=self.plataforma,
-                    codigo_confirmacao=codigo,
-                    data_reserva=self.parse_date(row['Data da reserva']),
-                    data_entrada=self.parse_date(row['Data de início']),
-                    data_saida=self.parse_date(row['Data de término']),
-                    noites=int(row['Noites']),
-                    valor_bruto=Money(self.parse_decimal(row['Valor']), 'BRL'),
-                    taxa_servico=Money(self.parse_decimal(row['Taxa de serviço']), 'BRL'),
-                    taxa_limpeza=Money(self.parse_decimal(row['Taxa de limpeza']), 'BRL'),
-                    ganhos_brutos=Money(self.parse_decimal(row['Ganhos brutos']), 'BRL'),
-                    impostos=Money(self.parse_decimal(row['Impostos de ocupação']), 'BRL'),
-                    status='PENDENTE'
+                # Se não houver ganhos brutos especificados, usa o valor bruto
+                ganhos_brutos = Money(
+                    self.parse_decimal(row.get('Ganhos brutos', str(valor_bruto.amount))), 
+                    'BRL'
                 )
-                self.sucessos.append(f'Reserva {codigo} criada com sucesso')
                 
-        except Exception as e:
-            self.erros.append(f'Erro ao processar reserva: {str(e)}')
-    
-    def process_complete_reservation(self, row: Dict) -> None:
-        """Processa uma linha do CSV completo."""
-        try:
-            # Ignora linhas de Payout
-            if row['Tipo'] != 'Reserva':
-                return
-                
-            with transaction.atomic():
-                codigo = row['Código de Confirmação']
+                # Cria ou atualiza a reserva
                 reserva = Reserva.objects.filter(codigo_confirmacao=codigo).first()
                 
                 if not reserva:
                     # Se não existe, cria nova reserva
-                    pessoa, _ = Pessoa.objects.get_or_create(
-                        nome=row['Hóspede']
-                    )
-                    
                     reserva = Reserva.objects.create(
                         hospede_principal=pessoa,
                         plataforma=self.plataforma,
                         codigo_confirmacao=codigo,
-                        data_reserva=self.parse_date(row['Data da reserva']),
-                        data_entrada=self.parse_date(row['Data de início']),
-                        data_saida=self.parse_date(row['Data de término']),
-                        noites=int(row['Noites']),
-                        valor_bruto=Money(self.parse_decimal(row['Valor']), 'BRL'),
-                        taxa_servico=Money(self.parse_decimal(row['Taxa de serviço']), 'BRL'),
-                        taxa_limpeza=Money(self.parse_decimal(row['Taxa de limpeza']), 'BRL'),
-                        ganhos_brutos=Money(self.parse_decimal(row['Ganhos brutos']), 'BRL'),
-                        impostos=Money(self.parse_decimal(row['Impostos de ocupação']), 'BRL'),
-                        status='CONFIRMADA'
+                        data_reserva=data_reserva,
+                        data_entrada=data_entrada,
+                        data_saida=data_saida,
+                        noites=int(row.get('Noites', 0) or 0),
+                        valor_bruto=valor_bruto,
+                        ganhos_brutos=ganhos_brutos,
+                        status=status
                     )
                     self.sucessos.append(f'Reserva {codigo} criada com sucesso')
                 else:
                     # Atualiza a reserva existente
-                    reserva.valor_bruto = Money(self.parse_decimal(row['Valor']), 'BRL')
-                    reserva.taxa_servico = Money(self.parse_decimal(row['Taxa de serviço']), 'BRL')
-                    reserva.taxa_limpeza = Money(self.parse_decimal(row['Taxa de limpeza']), 'BRL')
-                    reserva.ganhos_brutos = Money(self.parse_decimal(row['Ganhos brutos']), 'BRL')
-                    reserva.impostos = Money(self.parse_decimal(row['Impostos de ocupação']), 'BRL')
-                    reserva.status = 'CONFIRMADA'
+                    reserva.valor_bruto = valor_bruto
+                    reserva.ganhos_brutos = ganhos_brutos
                     reserva.save()
                     self.sucessos.append(f'Reserva {codigo} atualizada com sucesso')
                     
         except Exception as e:
             self.erros.append(f'Erro ao processar reserva: {str(e)}')
+
+    def process_pending_reservation(self, row: Dict) -> None:
+        """Processa uma linha do CSV de reservas pendentes."""
+        self.process_reservation(row, status='CONFIRMADA')
     
-    def import_pending_csv(self, file_path: str) -> Dict:
-        """Importa CSV de reservas pendentes."""
-        try:
-            with open(file_path, newline='', encoding='utf-8-sig') as csvfile:
-                reader = csv.DictReader(csvfile)
-                for row in reader:
-                    self.process_pending_reservation(row)
-        except Exception as e:
-            self.erros.append(f'Erro ao ler arquivo: {str(e)}')
-        
+    def process_complete_reservation(self, row: Dict) -> None:
+        """Processa uma linha do CSV completo."""
+        if row.get('Tipo', '').strip() == 'Payout':
+            return
+        self.process_reservation(row, status='CONFIRMADA')
+
+    def get_result(self) -> Dict:
+        """Retorna o resultado da importação."""
         return {
-            'sucessos': self.sucessos,
-            'erros': self.erros
+            'success': len(self.erros) == 0,
+            'imported': len(self.sucessos),
+            'errors': self.erros
         }
-    
-    def import_complete_csv(self, file_path: str) -> Dict:
-        """Importa CSV completo."""
+
+    def import_csv(self, file_path: str) -> Dict:
+        """Importa CSV de reservas."""
         try:
-            with open(file_path, newline='', encoding='utf-8-sig') as csvfile:
-                reader = csv.DictReader(csvfile)
+            with open(file_path, 'r', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
                 for row in reader:
-                    self.process_complete_reservation(row)
+                    if self.is_pending:
+                        self.process_pending_reservation(row)
+                    else:
+                        self.process_complete_reservation(row)
         except Exception as e:
-            self.erros.append(f'Erro ao ler arquivo: {str(e)}')
+            self.erros.append(str(e))
         
-        return {
-            'sucessos': self.sucessos,
-            'erros': self.erros
-        }
+        return self.get_result()

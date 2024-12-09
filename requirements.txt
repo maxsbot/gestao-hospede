@@ -1,0 +1,9 @@
+asgiref==3.8.1
+Django==5.1.4
+sqlparse==0.5.2
+python-decouple==3.8
+django-crispy-forms==2.1
+crispy-bootstrap5==2023.10
+Pillow==11.0.0
+django-money==3.4.1
+python-decouple==3.8

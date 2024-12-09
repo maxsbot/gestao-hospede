@@ -3,6 +3,11 @@ from django.core.validators import MinValueValidator
 from djmoney.models.fields import MoneyField
 from django.core.exceptions import ValidationError
 import re
+from datetime import datetime, time, timedelta
+from django.conf import settings
+from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 def validate_cpf(value):
     if value:
@@ -92,8 +97,8 @@ class Reserva(BaseModel):
     STATUS_CHOICES = [
         ('PENDENTE', 'Pendente'),
         ('CONFIRMADA', 'Confirmada'),
-        ('CHECKIN', 'Check-in Realizado'),
-        ('CHECKOUT', 'Check-out Realizado'),
+        ('CHECKIN', 'Check-in'),
+        ('CHECKOUT', 'Check-out'),
         ('CANCELADA', 'Cancelada'),
         ('FINALIZADA', 'Finalizada'),
     ]
@@ -118,22 +123,139 @@ class Reserva(BaseModel):
     status = models.CharField('Status', max_length=15, choices=STATUS_CHOICES, default='CONFIRMADA')
     observacoes = models.TextField('Observações', blank=True, null=True)
     
+    # Campos de controle de estadia
+    data_checkin = models.DateTimeField('Data/Hora do Check-in', null=True, blank=True)
+    data_checkout = models.DateTimeField('Data/Hora do Check-out', null=True, blank=True)
+    checkin_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='checkins_realizados'
+    )
+    checkout_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='checkouts_realizados'
+    )
+    observacoes_checkin = models.TextField('Observações do Check-in', blank=True, null=True)
+    observacoes_checkout = models.TextField('Observações do Check-out', blank=True, null=True)
+    
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+    
     class Meta:
         verbose_name = 'Reserva'
         verbose_name_plural = 'Reservas'
         ordering = ['-data_entrada']
-    
+
     def __str__(self):
         return f'{self.codigo_confirmacao} - {self.hospede_principal.nome}'
-    
-    def clean(self):
-        if self.data_entrada and self.data_saida:
-            if self.data_entrada >= self.data_saida:
-                raise ValidationError('Data de entrada deve ser anterior à data de saída')
+
+    @property
+    def horario_checkin_padrao(self):
+        """Retorna o horário padrão de check-in (15:00)"""
+        return time(hour=15, minute=0)
+        
+    @property
+    def horario_checkout_padrao(self):
+        """Retorna o horário padrão de check-out (12:00)"""
+        return time(hour=12, minute=0)
+
+    def realizar_checkin(self, user, observacoes=None):
+        """Realiza o check-in da reserva."""
+        hoje = timezone.now().date()
+        
+        # Só permite check-in se estiver confirmada
+        if self.status != 'CONFIRMADA':
+            raise ValidationError('Só é possível realizar check-in em reservas confirmadas.')
             
-            # Atualiza número de noites
+        # Não permite check-in muito antecipado
+        if (self.data_entrada - hoje).days > 1:
+            raise ValidationError('Não é possível realizar check-in com mais de 1 dia de antecedência.')
+            
+        # Se for hoje, usa hora atual, senão usa hora padrão
+        if hoje == self.data_entrada:
+            self.data_checkin = timezone.now()
+        else:
+            self.data_checkin = datetime.combine(
+                self.data_entrada,
+                self.horario_checkin_padrao
+            ).replace(tzinfo=timezone.get_current_timezone())
+            
+        self.checkin_por = user
+        self.observacoes_checkin = observacoes
+        self.status = 'CHECKIN'
+        self.save()
+        
+    def realizar_checkout(self, user, observacoes=None):
+        """Realiza o check-out da reserva."""
+        hoje = timezone.now().date()
+        
+        # Só permite checkout se já fez checkin
+        if self.status != 'CHECKIN':
+            raise ValidationError('Só é possível realizar check-out após o check-in.')
+            
+        # Se for hoje, usa hora atual, senão usa hora padrão
+        if hoje == self.data_saida:
+            self.data_checkout = timezone.now()
+        else:
+            self.data_checkout = datetime.combine(
+                self.data_saida,
+                self.horario_checkout_padrao
+            ).replace(tzinfo=timezone.get_current_timezone())
+            
+        self.checkout_por = user
+        self.observacoes_checkout = observacoes
+        self.status = 'CHECKOUT'
+        self.save()
+
+    @property
+    def status_atual(self):
+        """Retorna o status atual baseado nas datas."""
+        hoje = timezone.now().date()
+        
+        # Se foi cancelada, mantém cancelada
+        if self.status == 'CANCELADA':
+            return 'CANCELADA'
+            
+        # Se está pendente e é do Airbnb, muda para confirmada
+        if self.status == 'PENDENTE' and self.plataforma.nome == 'Airbnb':
+            return 'CONFIRMADA'
+            
+        # Se já passou da data de saída e teve checkout
+        if hoje > self.data_saida and self.status == 'CHECKOUT':
+            return 'FINALIZADA'
+            
+        return self.status
+
+    def save(self, *args, **kwargs):
+        """Sobrescreve o método save para atualizar o status automaticamente."""
+        if not self.codigo_confirmacao and self.plataforma.nome == 'Airbnb':
+            self.status = 'CONFIRMADA'
+        
+        # Atualiza o status baseado nas datas
+        novo_status = self.status_atual
+        if novo_status != self.status:
+            self.status = novo_status
+            
+        # Calcula as noites
+        if self.data_entrada and self.data_saida:
             delta = self.data_saida - self.data_entrada
             self.noites = delta.days
+            
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        """Valida os dados antes de salvar."""
+        if self.data_entrada and self.data_saida:
+            if self.data_entrada > self.data_saida:
+                raise ValidationError('A data de entrada não pode ser posterior à data de saída.')
+                
+            if self.data_entrada < self.data_reserva:
+                raise ValidationError('A data de entrada não pode ser anterior à data da reserva.')
 
 class DocumentoReserva(BaseModel):
     TIPO_CHOICES = [
@@ -156,6 +278,7 @@ class DocumentoReserva(BaseModel):
     
     def __str__(self):
         return f'{self.get_tipo_documento_display()} - {self.pessoa.nome}'
+
 class PessoaReserva(BaseModel):
     TIPO_CHOICES = [
         ('HOSPEDE_PRINCIPAL', 'Hóspede Principal'),

@@ -1,5 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.urls import path
+from django.http import HttpResponseRedirect
+from django.contrib import messages
+from django.urls import reverse
 from .models import (
     Pessoa, Contato, RelacionamentoPessoas, Plataforma,
     Reserva, DocumentoReserva, PessoaReserva
@@ -43,50 +47,30 @@ class PlataformaAdmin(admin.ModelAdmin):
 
 @admin.register(Reserva)
 class ReservaAdmin(admin.ModelAdmin):
-    list_display = [
-        'codigo_confirmacao', 'hospede_principal', 'plataforma',
-        'data_entrada', 'data_saida', 'noites', 'status',
-        'ganhos_brutos'
-    ]
-    list_filter = ['status', 'plataforma', 'data_entrada', 'data_saida']
-    search_fields = [
-        'codigo_confirmacao', 'hospede_principal__nome',
-        'hospede_principal__cpf'
-    ]
-    readonly_fields = ['noites', 'created_at', 'updated_at']
-    inlines = [PessoaReservaInline, DocumentoReservaInline]
+    list_display = ['codigo_confirmacao', 'hospede_principal', 'plataforma', 
+                   'data_entrada', 'data_saida', 'noites', 'status', 'ganhos_brutos']
+    list_filter = ['status', 'plataforma']
+    search_fields = ['codigo_confirmacao', 'hospede_principal__nome']
+    readonly_fields = ['created_at', 'updated_at']
+    inlines = [DocumentoReservaInline, PessoaReservaInline]
     
-    fieldsets = (
-        ('Informações Principais', {
-            'fields': (
-                'hospede_principal', 'plataforma', 'codigo_confirmacao',
-                'status'
-            )
-        }),
-        ('Datas', {
-            'fields': (
-                'data_reserva', 'data_entrada', 'data_saida', 'noites'
-            )
-        }),
-        ('Hóspedes', {
-            'fields': (
-                'num_adultos', 'num_criancas'
-            )
-        }),
-        ('Valores', {
-            'fields': (
-                'valor_bruto', 'taxa_servico', 'taxa_limpeza',
-                'ganhos_brutos', 'impostos'
-            )
-        }),
-        ('Observações', {
-            'fields': ('observacoes',)
-        }),
-        ('Metadados', {
-            'classes': ('collapse',),
-            'fields': ('created_at', 'updated_at')
-        })
-    )
+    def get_readonly_fields(self, request, obj=None):
+        readonly_fields = list(self.readonly_fields)
+        if obj and obj.status in ['CHECKIN', 'CHECKOUT', 'FINALIZADA']:
+            readonly_fields.extend(['data_entrada', 'data_saida'])
+        return readonly_fields
+    
+    def save_model(self, request, obj, form, change):
+        if not obj.codigo_confirmacao:
+            # Gera um código de confirmação único
+            prefix = 'HM'  # Hotel Manager
+            import uuid
+            while True:
+                new_code = f"{prefix}{uuid.uuid4().hex[:8].upper()}"
+                if not type(obj).objects.filter(codigo_confirmacao=new_code).exists():
+                    obj.codigo_confirmacao = new_code
+                    break
+        super().save_model(request, obj, form, change)
 
 @admin.register(DocumentoReserva)
 class DocumentoReservaAdmin(admin.ModelAdmin):
@@ -96,7 +80,7 @@ class DocumentoReservaAdmin(admin.ModelAdmin):
     
     def get_arquivo(self, obj):
         if obj.arquivo:
-            return format_html('<a href="{}" target="_blank">Ver arquivo</a>', obj.arquivo.url)
+            return format_html('<a href="{}" target="_blank">Visualizar</a>', obj.arquivo.url)
         return '-'
     get_arquivo.short_description = 'Arquivo'
 

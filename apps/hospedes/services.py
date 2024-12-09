@@ -55,7 +55,20 @@ class AirbnbCSVImporter:
             if not Reserva.objects.filter(codigo_confirmacao=codigo).exists():
                 return codigo
 
-    def process_reservation(self, row: Dict, status: str = 'CONFIRMADA') -> None:
+    def determine_status(self, data_entrada: datetime, data_saida: datetime) -> str:
+        """Determina o status da reserva baseado nas datas."""
+        hoje = datetime.now().date()
+        dias_para_entrada = (data_entrada - hoje).days
+        dias_para_saida = (data_saida - hoje).days
+
+        if dias_para_saida < 0:
+            return 'FINALIZADA'
+        elif dias_para_entrada <= 0:
+            return 'CHECKIN'
+        else:
+            return 'CONFIRMADA'
+
+    def process_reservation(self, row: Dict, is_complete: bool = False) -> None:
         """Processa uma linha do CSV."""
         try:
             with transaction.atomic():
@@ -82,6 +95,11 @@ class AirbnbCSVImporter:
                 if not all([data_reserva, data_entrada, data_saida]):
                     self.erros.append(f'Data inválida para reserva {codigo}')
                     return
+
+                # Determina o status baseado nas datas
+                status = self.determine_status(data_entrada, data_saida)
+                if is_complete and status not in ['CHECKOUT', 'CHECKIN']:
+                    status = 'FINALIZADA'
 
                 # Processa valores financeiros
                 valor_bruto = Money(self.parse_decimal(row.get('Valor', '0')), 'BRL')
@@ -114,6 +132,7 @@ class AirbnbCSVImporter:
                     # Atualiza a reserva existente
                     reserva.valor_bruto = valor_bruto
                     reserva.ganhos_brutos = ganhos_brutos
+                    reserva.status = status
                     reserva.save()
                     self.sucessos.append(f'Reserva {codigo} atualizada com sucesso')
                     
@@ -122,13 +141,13 @@ class AirbnbCSVImporter:
 
     def process_pending_reservation(self, row: Dict) -> None:
         """Processa uma linha do CSV de reservas pendentes."""
-        self.process_reservation(row, status='CONFIRMADA')
+        self.process_reservation(row, is_complete=False)
     
     def process_complete_reservation(self, row: Dict) -> None:
         """Processa uma linha do CSV completo."""
         if row.get('Tipo', '').strip() == 'Payout':
             return
-        self.process_reservation(row, status='CONFIRMADA')
+        self.process_reservation(row, is_complete=True)
 
     def get_result(self) -> Dict:
         """Retorna o resultado da importação."""

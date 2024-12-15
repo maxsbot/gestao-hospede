@@ -59,7 +59,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             ).exclude(status='CANCELADA')
         
         # Ordenar reservas por prioridade do status calculado e data de check-in
-        reservas = sorted(reservas, key=lambda r: (r.calcular_status['prioridade'], r.data_entrada))
+        if filtro_status == 'concluidas':
+            # Para concluídas, ordenar por data de check-in decrescente (mais recente primeiro)
+            reservas = sorted(reservas, key=lambda r: (r.calcular_status['prioridade'], -r.data_entrada.toordinal()))
+        else:
+            # Para as demais, manter ordem crescente de data
+            reservas = sorted(reservas, key=lambda r: (r.calcular_status['prioridade'], r.data_entrada))
         context['reservas'] = reservas
         
         # Contadores para as abas

@@ -1,9 +1,20 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect
-from django.views.generic import View
+from django.views.generic import View, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
 
 from .services import AirbnbCSVImporter
+
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'hospedes/dashboard.html'
+    login_url = reverse_lazy('auth:login')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Adicione aqui qualquer contexto adicional que você precise
+        return context
 
 
 class ImportarCSVAirbnbView(LoginRequiredMixin, View):

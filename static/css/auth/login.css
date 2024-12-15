@@ -1,0 +1,116 @@
+:root {
+    --nubank-purple: #820AD1;
+    --nubank-purple-light: #A134E6;
+    --nubank-purple-dark: #6B0AAD;
+}
+
+.login-container {
+    background: white;
+    width: 100%;
+    max-width: 568px;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-header h1 {
+    color: var(--nubank-purple);
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Crispy Forms Customization */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-control {
+    padding: 0.75rem;
+    border: 1px solid #DDDDDD;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--nubank-purple);
+    box-shadow: 0 0 0 0.2rem rgba(130, 10, 209, 0.25);
+}
+
+.form-select {
+    padding: 0.75rem;
+    border: 1px solid #DDDDDD;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: white;
+    cursor: pointer;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 0.875rem;
+    background-color: var(--nubank-purple);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 1rem;
+}
+
+.btn-login:hover {
+    background-color: var(--nubank-purple-light);
+}
+
+.btn-login:active {
+    background-color: var(--nubank-purple-dark);
+}
+
+/* Alert Messages */
+.messages {
+    margin: 1rem 0;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.alert-error {
+    background-color: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.login-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #717171;
+}
+
+.login-footer a {
+    color: var(--nubank-purple);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-footer a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .login-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+}

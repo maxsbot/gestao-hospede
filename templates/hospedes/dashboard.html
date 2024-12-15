@@ -41,8 +41,8 @@
     <main class="dashboard-content">
         <div class="flex-grow-1 container-fluid py-4">
             <!-- Título e Filtros -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>Reservas</h1>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <h1 class="mb-0">Reservas</h1>
                 <div class="d-flex gap-2">
                     <button class="btn btn-outline-secondary">
                         <i class="bi bi-funnel"></i> Filtrar
@@ -105,8 +105,8 @@
                 </li>
             </ul>
 
-            <!-- Tabela de Reservas -->
-            <div class="table-responsive">
+            <!-- Tabela de Reservas (Desktop) -->
+            <div class="table-responsive d-none d-md-block">
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -144,8 +144,13 @@
                             <td>{{ reserva.plataforma.nome }}</td>
                             <td>{{ reserva.codigo_confirmacao }}</td>
                             <td>R$ {{ reserva.valor_bruto.amount|floatformat:2 }}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">Informações</button>
+                            <td class="text-end">
+                                <a href="#" class="btn btn-sm btn-outline-success me-1" title="WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
@@ -158,8 +163,102 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Cards de Reservas (Mobile) -->
+            <div class="d-md-none">
+                {% for reserva in reservas %}
+                <div class="card mb-3" role="button" data-bs-toggle="modal" data-bs-target="#reservaModal{{ reserva.id }}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge {{ reserva.calcular_status.classe }}">
+                                {{ reserva.calcular_status.texto }}
+                            </span>
+                            <div class="actions" onclick="event.stopPropagation();">
+                                <a href="#" class="btn btn-sm btn-outline-success me-1" title="WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <h6 class="card-title">{{ reserva.hospede_principal.nome }}</h6>
+                        <p class="card-text small text-muted mb-0">
+                            {{ reserva.num_adultos }} adulto{{ reserva.num_adultos|pluralize }}
+                            {% if reserva.num_criancas %}
+                            , {{ reserva.num_criancas }} criança{{ reserva.num_criancas|pluralize }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Modal com Detalhes -->
+                <div class="modal fade" id="reservaModal{{ reserva.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-body">
+                                <!-- Status e Ações -->
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <span class="badge {{ reserva.calcular_status.classe }}">
+                                        {{ reserva.calcular_status.texto }}
+                                    </span>
+                                    <div>
+                                        <a href="#" class="btn btn-sm btn-outline-success me-1" title="WhatsApp">
+                                            <i class="bi bi-whatsapp"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-sm btn-outline-primary" title="Editar">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Informações do Hóspede -->
+                                <h5 class="mb-1">{{ reserva.hospede_principal.nome }}</h5>
+                                <p class="text-muted mb-4">
+                                    {{ reserva.num_adultos }} adulto{{ reserva.num_adultos|pluralize }}
+                                    {% if reserva.num_criancas %}
+                                    , {{ reserva.num_criancas }} criança{{ reserva.num_criancas|pluralize }}
+                                    {% endif %}
+                                </p>
+
+                                <!-- Detalhes da Reserva -->
+                                <dl class="row mb-0">
+                                    <dt class="col-5">Check-in:</dt>
+                                    <dd class="col-7 mb-2">{{ reserva.data_entrada|date:"d/m/Y" }}</dd>
+                                    
+                                    <dt class="col-5">Check-out:</dt>
+                                    <dd class="col-7 mb-2">{{ reserva.data_saida|date:"d/m/Y" }}</dd>
+                                    
+                                    <dt class="col-5">Reservado em:</dt>
+                                    <dd class="col-7 mb-2">{{ reserva.data_reserva|date:"d/m/Y" }}</dd>
+                                    
+                                    <dt class="col-5">Anúncio:</dt>
+                                    <dd class="col-7 mb-2">{{ reserva.plataforma.nome }}</dd>
+                                    
+                                    <dt class="col-5">Código:</dt>
+                                    <dd class="col-7 mb-2">{{ reserva.codigo_confirmacao }}</dd>
+                                    
+                                    <dt class="col-5">Total:</dt>
+                                    <dd class="col-7 mb-2">R$ {{ reserva.valor_bruto.amount|floatformat:2 }}</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <p class="text-muted mb-0">Nenhuma reserva encontrada</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </main>
+
+    <!-- Floating Action Button -->
+    <a href="{% url 'hospedes:criar_reserva' %}" class="fab-button" title="Nova Reserva">
+        <i class="bi bi-plus-lg"></i>
+    </a>
 </div>
 {% endblock %}
 

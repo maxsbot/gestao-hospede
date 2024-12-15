@@ -33,11 +33,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         ).count()
         
         # Dados para a tabela de reservas
-        context['reservas'] = Reserva.objects.select_related(
+        reservas = Reserva.objects.select_related(
             'hospede_principal', 'plataforma'
         ).filter(
             data_saida__gte=hoje
         ).order_by('data_entrada')[:10]
+        
+        # Ordenar reservas por prioridade do status calculado
+        reservas = sorted(reservas, key=lambda r: r.calcular_status['prioridade'])
+        context['reservas'] = reservas
         
         # Contadores para as abas
         context['count_programadas'] = reservas_programadas.count()

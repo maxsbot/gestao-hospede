@@ -2,10 +2,10 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from djmoney.models.fields import MoneyField
 from django.core.exceptions import ValidationError
-import re
-from datetime import datetime, time, timedelta
-from django.conf import settings
 from django.utils import timezone
+from datetime import datetime, time, timedelta
+import re
+from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -153,6 +153,70 @@ class Reserva(BaseModel):
 
     def __str__(self):
         return f'{self.codigo_confirmacao} - {self.hospede_principal.nome}'
+
+    @property
+    def calcular_status(self):
+        """Calcula o status da reserva baseado nas datas de check-in e check-out"""
+        hoje = timezone.now().date()
+        proximos_7_dias = hoje + timedelta(days=7)
+        
+        # 1. Verificar check-in próximo
+        if hoje <= self.data_entrada <= proximos_7_dias:
+            if self.data_entrada == hoje:
+                return {
+                    'texto': 'Check-in hoje',
+                    'classe': 'bg-danger',
+                    'prioridade': 1
+                }
+            return {
+                'texto': 'Check-in próximo',
+                'classe': 'bg-warning',
+                'prioridade': 2
+            }
+            
+        # 2. Verificar status baseado no check-in passado
+        if self.data_entrada < hoje:
+            if hoje <= self.data_saida <= proximos_7_dias:
+                if self.data_saida == hoje:
+                    return {
+                        'texto': 'Check-out hoje',
+                        'classe': 'bg-danger',
+                        'prioridade': 1
+                    }
+                return {
+                    'texto': 'Check-out próximo',
+                    'classe': 'bg-warning',
+                    'prioridade': 2
+                }
+            
+            if self.data_saida > hoje:
+                return {
+                    'texto': 'Em andamento',
+                    'classe': 'bg-primary',
+                    'prioridade': 3
+                }
+            
+            if self.data_saida <= hoje:
+                return {
+                    'texto': 'Concluído',
+                    'classe': 'bg-success',
+                    'prioridade': 4
+                }
+        
+        # 3. Reservas futuras
+        if self.data_entrada > proximos_7_dias:
+            return {
+                'texto': 'Confirmada',
+                'classe': 'bg-secondary',
+                'prioridade': 5
+            }
+        
+        # 4. Status padrão para casos não cobertos
+        return {
+            'texto': 'Status indefinido',
+            'classe': 'bg-secondary',
+            'prioridade': 6
+        }
 
     @property
     def horario_checkin_padrao(self):

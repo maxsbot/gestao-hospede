@@ -125,8 +125,8 @@
                         {% for reserva in reservas %}
                         <tr>
                             <td>
-                                <span class="badge {% if reserva.status == 'CONFIRMADA' %}bg-success{% elif reserva.status == 'CHECKIN' %}bg-primary{% elif reserva.status == 'CANCELADA' %}bg-danger{% else %}bg-secondary{% endif %}">
-                                    {{ reserva.get_status_display }}
+                                <span class="badge {{ reserva.calcular_status.classe }}">
+                                    {{ reserva.calcular_status.texto }}
                                 </span>
                             </td>
                             <td>

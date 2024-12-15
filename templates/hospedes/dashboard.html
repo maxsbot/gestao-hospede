@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Dashboard - Sistema de Gestão de Hóspedes{% endblock %}
 
@@ -9,6 +10,7 @@
 
 {% block content %}
 <div class="dashboard-container">
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-purple">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'hospedes:dashboard' %}">Sistema de Gestão de Hóspedes</a>
@@ -38,51 +40,130 @@
     </nav>
 
     <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <h1 class="mb-4">Dashboard</h1>
-                
-                <div class="row">
-                    <!-- Cards de estatísticas virão aqui -->
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Total de Hóspedes</h5>
-                                <p class="card-text display-4">0</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Check-ins Hoje</h5>
-                                <p class="card-text display-4">0</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4 mb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Check-outs Hoje</h5>
-                                <p class="card-text display-4">0</p>
-                            </div>
-                        </div>
+        <!-- Título e Filtros -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Reservas</h1>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+                <button class="btn btn-outline-secondary">
+                    <i class="bi bi-download"></i> Exportar
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards de Estatísticas -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Total de Reservas</h6>
+                        <h2 class="card-title mb-0">{{ total_reservas }}</h2>
                     </div>
                 </div>
-                
-                <!-- Lista de próximos check-ins -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Próximos Check-ins</h5>
-                    </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
                     <div class="card-body">
-                        <p class="text-muted">Nenhum check-in programado.</p>
+                        <h6 class="card-subtitle mb-2 text-muted">Check-ins Hoje</h6>
+                        <h2 class="card-title mb-0">{{ reservas_hoje }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Check-outs Hoje</h6>
+                        <h2 class="card-title mb-0">{{ checkout_hoje }}</h2>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Abas de Status -->
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link active" href="#">
+                    Programadas <span class="badge bg-secondary">{{ count_programadas }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    Em Andamento <span class="badge bg-secondary">{{ count_em_andamento }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    Concluídas <span class="badge bg-secondary">{{ count_concluidas }}</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    Canceladas <span class="badge bg-secondary">{{ count_canceladas }}</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Tabela de Reservas -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Hóspedes</th>
+                        <th>Check-in</th>
+                        <th>Checkout</th>
+                        <th>Reservado</th>
+                        <th>Anúncio</th>
+                        <th>Código</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reserva in reservas %}
+                    <tr>
+                        <td>
+                            <span class="badge {% if reserva.status == 'CONFIRMADA' %}bg-success{% elif reserva.status == 'CHECKIN' %}bg-primary{% elif reserva.status == 'CANCELADA' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ reserva.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div>{{ reserva.hospede_principal.nome }}</div>
+                            <small class="text-muted">
+                                {{ reserva.num_adultos }} adulto{{ reserva.num_adultos|pluralize }}
+                                {% if reserva.num_criancas %}
+                                , {{ reserva.num_criancas }} criança{{ reserva.num_criancas|pluralize }}
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td>{{ reserva.data_entrada|date:"d/m/Y" }}</td>
+                        <td>{{ reserva.data_saida|date:"d/m/Y" }}</td>
+                        <td>{{ reserva.data_reserva|date:"d/m/Y" }}</td>
+                        <td>{{ reserva.plataforma.nome }}</td>
+                        <td>{{ reserva.codigo_confirmacao }}</td>
+                        <td>R$ {{ reserva.valor_bruto.amount|floatformat:2 }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">Informações</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <p class="text-muted mb-0">Nenhuma reserva encontrada</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Adicione aqui qualquer JavaScript necessário
+</script>
 {% endblock %}

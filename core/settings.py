@@ -26,6 +26,7 @@ DJANGO_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',  # Adiciona suporte a humanização
 ]
 
 THIRD_PARTY_APPS = [
@@ -35,8 +36,8 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    'apps.hospedes',
     'apps.auth.apps.AuthConfig',
+    'apps.hospedes',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

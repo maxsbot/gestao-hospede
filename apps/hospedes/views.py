@@ -17,10 +17,19 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         hoje = timezone.localtime().date()
         
+        # Pegar o status do filtro da URL
+        filtro_status = self.request.GET.get('status')
+        context['filtro_status'] = filtro_status
+        
         # Filtros básicos
         reservas_programadas = Reserva.objects.filter(status='CONFIRMADA')
-        reservas_em_andamento = Reserva.objects.filter(status='CHECKIN')
-        reservas_concluidas = Reserva.objects.filter(status='FINALIZADA')
+        reservas_em_andamento = Reserva.objects.filter(
+            data_entrada__lte=hoje,
+            data_saida__gte=hoje
+        )
+        reservas_concluidas = Reserva.objects.filter(
+            data_saida__lt=hoje
+        ).exclude(status='CANCELADA')
         reservas_canceladas = Reserva.objects.filter(status='CANCELADA')
         
         # Estatísticas para os cards
@@ -35,12 +44,22 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Dados para a tabela de reservas
         reservas = Reserva.objects.select_related(
             'hospede_principal', 'plataforma'
-        ).filter(
-            data_saida__gte=hoje
-        ).order_by('data_entrada')[:10]
+        )
         
-        # Ordenar reservas por prioridade do status calculado
-        reservas = sorted(reservas, key=lambda r: r.calcular_status['prioridade'])
+        # Aplicar filtro baseado no status selecionado
+        if filtro_status == 'em_andamento':
+            reservas = reservas_em_andamento
+        elif filtro_status == 'concluidas':
+            reservas = reservas_concluidas
+        elif filtro_status == 'canceladas':
+            reservas = reservas_canceladas
+        else:  # programadas (default)
+            reservas = reservas.filter(
+                data_saida__gte=hoje
+            ).exclude(status='CANCELADA')
+        
+        # Ordenar reservas por prioridade do status calculado e data de check-in
+        reservas = sorted(reservas, key=lambda r: (r.calcular_status['prioridade'], r.data_entrada))
         context['reservas'] = reservas
         
         # Contadores para as abas

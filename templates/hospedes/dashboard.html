@@ -84,22 +84,22 @@
             <!-- Abas de Status -->
             <ul class="nav nav-tabs mb-4">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#">
+                    <a class="nav-link {% if not filtro_status %}active{% endif %}" href="{% url 'hospedes:dashboard' %}">
                         Programadas <span class="badge bg-secondary">{{ count_programadas }}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link {% if filtro_status == 'em_andamento' %}active{% endif %}" href="{% url 'hospedes:dashboard' %}?status=em_andamento">
                         Em Andamento <span class="badge bg-secondary">{{ count_em_andamento }}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link {% if filtro_status == 'concluidas' %}active{% endif %}" href="{% url 'hospedes:dashboard' %}?status=concluidas">
                         Concluídas <span class="badge bg-secondary">{{ count_concluidas }}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link {% if filtro_status == 'canceladas' %}active{% endif %}" href="{% url 'hospedes:dashboard' %}?status=canceladas">
                         Canceladas <span class="badge bg-secondary">{{ count_canceladas }}</span>
                     </a>
                 </li>

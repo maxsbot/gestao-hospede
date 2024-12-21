@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Modal de Importação -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Importar Arquivo CSV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="csvImportForm" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="csv_file" class="form-label">Selecione o arquivo CSV</label>
+                        <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <p class="mb-2">O arquivo CSV deve conter as seguintes colunas:</p>
+                        <ul class="mb-0">
+                            <li>Código de confirmação</li>
+                            <li>Status</li>
+                            <li>Nome do hóspede</li>
+                            <li>Entrar em contato</li>
+                            <li>Nº de adultos</li>
+                            <li>Nº de crianças</li>
+                            <li>Nº de bebês</li>
+                            <li>Data de início</li>
+                            <li>Data de término</li>
+                            <li>Nº de noites</li>
+                            <li>Reservado</li>
+                            <li>Anúncio</li>
+                            <li>Ganhos</li>
+                        </ul>
+                    </div>
+                    <div id="importStatus" class="alert" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="submitImport">Importar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Abre o modal automaticamente
+    var importModal = new bootstrap.Modal(document.getElementById('importModal'));
+    importModal.show();
+
+    // Manipula o envio do formulário
+    document.getElementById('submitImport').addEventListener('click', function() {
+        var form = document.getElementById('csvImportForm');
+        var formData = new FormData(form);
+        var statusDiv = document.getElementById('importStatus');
+
+        // Mostra mensagem de carregamento
+        statusDiv.className = 'alert alert-info';
+        statusDiv.style.display = 'block';
+        statusDiv.textContent = 'Importando dados...';
+
+        fetch('{% url "hospedes:importar_csv" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                statusDiv.className = 'alert alert-success';
+                statusDiv.textContent = data.message;
+                // Redireciona após 2 segundos
+                setTimeout(() => {
+                    window.location.href = '{% url "hospedes:dashboard" %}';
+                }, 2000);
+            } else {
+                statusDiv.className = 'alert alert-danger';
+                statusDiv.textContent = data.message;
+                if (data.errors && data.errors.length > 0) {
+                    var errorList = document.createElement('ul');
+                    data.errors.forEach(error => {
+                        var li = document.createElement('li');
+                        li.textContent = error;
+                        errorList.appendChild(li);
+                    });
+                    statusDiv.appendChild(errorList);
+                }
+            }
+        })
+        .catch(error => {
+            statusDiv.className = 'alert alert-danger';
+            statusDiv.textContent = 'Erro ao importar: ' + error;
+        });
+    });
+});
+</script>
+{% endblock %}

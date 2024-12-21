@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from django.views.generic import View, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
@@ -8,6 +9,9 @@ from django.db.models import Count, Sum
 from .models import Reserva
 from .services import AirbnbCSVImporter
 from datetime import datetime, timedelta
+import csv
+import tempfile
+import os
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'hospedes/dashboard.html'
@@ -110,6 +114,38 @@ class ImportarCSVAirbnbView(LoginRequiredMixin, View):
             messages.error(request, erro)
         
         return redirect('importar_csv')
+
+
+def importar_csv(request):
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+        
+        # Salva o arquivo temporariamente
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            for chunk in csv_file.chunks():
+                temp_file.write(chunk)
+        
+        try:
+            importer = AirbnbCSVImporter()
+            result = importer.import_csv(temp_file.name)
+            
+            # Remove o arquivo temporário
+            os.unlink(temp_file.name)
+            
+            return JsonResponse({
+                'success': result['success'],
+                'message': f'Importação concluída! {result["imported"]} registros importados.',
+                'errors': result['errors']
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'Erro durante a importação: {str(e)}',
+                'errors': [str(e)]
+            }, status=500)
+            
+    return render(request, 'hospedes/importar_csv.html')
 
 
 class CriarReservaView(LoginRequiredMixin, TemplateView):

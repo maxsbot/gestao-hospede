@@ -48,6 +48,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         # Dados para a tabela de reservas
         reservas = Reserva.objects.select_related(
             'hospede_principal', 'plataforma'
+        ).prefetch_related(
+            'hospede_principal__contatos'
         )
         
         # Aplicar filtro baseado no status selecionado
@@ -69,6 +71,20 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         else:
             # Para as demais, manter ordem crescente de data
             reservas = sorted(reservas, key=lambda r: (r.calcular_status['prioridade'], r.data_entrada))
+            
+        # Preparar os dados de contato para cada reserva
+        for reserva in reservas:
+            whatsapp = reserva.hospede_principal.contatos.filter(tipo='WHATSAPP').first()
+            if whatsapp:
+                # Remove todos os caracteres não numéricos do telefone
+                telefone_limpo = ''.join(filter(str.isdigit, whatsapp.valor))
+                # Adiciona o código do país se não estiver presente
+                if not telefone_limpo.startswith('55'):
+                    telefone_limpo = '55' + telefone_limpo
+                reserva.whatsapp_link = f"https://wa.me/{telefone_limpo}?text=Oi,%20{reserva.hospede_principal.nome.split()[0]}"
+            else:
+                reserva.whatsapp_link = None
+                
         context['reservas'] = reservas
         
         # Contadores para as abas

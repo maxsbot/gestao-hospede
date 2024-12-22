@@ -4,7 +4,7 @@ Django settings for core project.
 
 from pathlib import Path
 from decouple import config, Csv
-import dj_database_url
+# import dj_database_url  # comentado para desenvolvimento local
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,7 +34,7 @@ THIRD_PARTY_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'djmoney',
-    'whitenoise',  # adicionar whitenoise
+    # 'whitenoise',  # comentado para desenvolvimento local
 ]
 
 LOCAL_APPS = [
@@ -46,7 +46,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # adicionar whitenoise
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',  # comentado para desenvolvimento local
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -76,11 +76,18 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
+#DATABASES = {
+#    'default': dj_database_url.config(
+#        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
+#        conn_max_age=600
+#    )
+#}
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Password validation
@@ -114,7 +121,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Whitenoise configuration
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # comentado para desenvolvimento local
 
 # Media files
 MEDIA_URL = 'media/'
@@ -137,10 +144,10 @@ AUTHENTICATION_BACKENDS = [
     'apps.auth.backends.PhoneAuthenticationBackend',  # Autenticação por telefone
 ]
 
-# Security settings
-SECURE_SSL_REDIRECT = True
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Security settings - comentado para desenvolvimento local
+# SECURE_SSL_REDIRECT = True
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

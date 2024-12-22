@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 # Criar um usuário de teste
-username = '+5579998830295'  # Número de telefone com código do país
+username = '+5579999930295'  # Número de telefone com código do país
 email = 'teste@example.com'
 
 if not User.objects.filter(username=username).exists():

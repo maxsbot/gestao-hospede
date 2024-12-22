@@ -40,10 +40,10 @@ start_services() {
     # Criar diretórios de log se não existirem
     mkdir -p "$(dirname "$GUNICORN_LOG_FILE")" "$(dirname "$NGINX_LOG_FILE")"
     
-    # Iniciar Gunicorn
+    # Iniciar Gunicorn com socket Unix
     echo "Iniciando Gunicorn..."
     gunicorn core.wsgi:application \
-        --bind 127.0.0.1:8001 \
+        --bind unix:/data/data/com.termux/files/home/app_logs/gunicorn.sock \
         --pid "$GUNICORN_PID_FILE" \
         --log-file "$GUNICORN_LOG_FILE" \
         --log-level debug \
@@ -56,7 +56,7 @@ start_services() {
     check_error "Falha ao iniciar Nginx"
     
     echo "Serviços iniciados com sucesso!"
-    echo "Acesse: http://localhost:8082"
+    echo "Acesse: http://localhost:8083"
     
     # Mostrar status inicial
     sleep 2

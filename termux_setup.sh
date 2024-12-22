@@ -44,7 +44,7 @@ pip install --upgrade pip
 check_error "Falha ao atualizar pip"
 pip install gunicorn whitenoise tzdata
 check_error "Falha ao instalar dependências base"
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 check_error "Falha ao instalar requirements.txt"
 
 # Configurar Nginx

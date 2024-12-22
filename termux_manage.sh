@@ -68,17 +68,19 @@ stop_services() {
     
     [ "$quiet" != "quiet" ] && echo "Parando serviços..."
     
-    # Parar Nginx se estiver rodando
-    if pgrep -x "nginx" > /dev/null; then
-        nginx -s stop 2>/dev/null
-    fi
+    # Parar Nginx de forma mais agressiva
+    pkill -9 -f nginx
+    rm -f ~/nginx_logs/nginx.pid
     
-    # Parar Gunicorn se estiver rodando
+    # Parar Gunicorn
     if [ -f "$GUNICORN_PID_FILE" ]; then
-        kill -TERM $(cat "$GUNICORN_PID_FILE") 2>/dev/null
+        kill -9 $(cat "$GUNICORN_PID_FILE") 2>/dev/null
         rm -f "$GUNICORN_PID_FILE"
     fi
-    pkill gunicorn 2>/dev/null
+    pkill -9 -f gunicorn
+    
+    # Garantir que as portas estejam livres
+    sleep 2
     
     [ "$quiet" != "quiet" ] && echo "Serviços parados!"
 }

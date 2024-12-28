@@ -13,9 +13,11 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-purple">
         <div class="navbar-container">
             <a class="navbar-brand" href="{% url 'hospedes:dashboard' %}">Pousada Atalaia</a>
+            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
@@ -25,14 +27,23 @@
                         <a class="nav-link" href="{% url 'hospedes:importar_csv' %}">Importar CSV</a>
                     </li>
                 </ul>
-                <div class="d-flex align-items-center">
-                    <span class="navbar-text me-3">
-                        Olá, {{ request.user.username }}
-                    </span>
+                
+                <div class="d-none d-lg-flex align-items-center">
+                    <span class="navbar-text me-3">Olá, {{ request.user.username }}</span>
                     <form method="post" action="{% url 'auth:logout' %}" class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outline-light">Sair</button>
                     </form>
+                </div>
+
+                <div class="d-lg-none mobile-user-menu">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="navbar-text">Olá, {{ request.user.username }}</span>
+                        <form method="post" action="{% url 'auth:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-light">Sair</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

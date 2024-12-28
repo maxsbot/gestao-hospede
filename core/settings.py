@@ -76,12 +76,18 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # Database
+POSTGRES_LOCALLY = False
+ENVIRONMENT = config('ENVIRONMENT', default='development')
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'),
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+
+if ENVIRONMENT == 'production' or POSTGRES_LOCALLY == True:
+    DATABASES['default'] = dj_database_url.config(default=config('DATABASE_URL'))
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

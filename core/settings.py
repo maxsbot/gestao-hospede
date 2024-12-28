@@ -19,10 +19,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS = []
-csrf_origins = config('CSRF_TRUSTED_ORIGINS', cast=Csv())
-if csrf_origins:
-    CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins]
+CSRF_TRUSTED_ORIGINS = [ 'https://gestao-hospede.up.railway.app' ]
 
 # Application definition
 

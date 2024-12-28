@@ -290,6 +290,67 @@ body {
     font-size: 24px;
 }
 
+/* Status tabs com rolagem horizontal */
+.status-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    padding-bottom: 0.5rem;
+}
+
+/* Esconde a scrollbar mas mantém a funcionalidade */
+.status-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.status-tabs .nav-tabs {
+    flex-wrap: nowrap;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+    min-width: max-content;
+}
+
+.status-tabs .nav-item {
+    display: inline-block;
+    margin-bottom: -1px;
+}
+
+.status-tab {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-600);
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    min-width: max-content;
+}
+
+.status-tab:hover {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.status-tab.active {
+    background: var(--purple);
+    color: white;
+    border-color: var(--purple);
+}
+
+.status-tab .badge {
+    margin-left: 0.5rem;
+    background: rgba(255,255,255,0.2);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
 /* Responsividade */
 @media (max-width: 767.98px) {
     .mobile-card {

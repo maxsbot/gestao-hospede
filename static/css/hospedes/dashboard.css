@@ -8,6 +8,12 @@
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
+    --gray-100: #f8f9fa;
+    --gray-600: #6c757d;
+    --gray-900: #495057;
+    --success-light: #dff0d8;
+    --success-color: #3e8e41;
+    --warning-color: #f0ad4e;
 }
 
 /* Reset e base */
@@ -26,9 +32,9 @@ body {
 
 /* Layout principal */
 .dashboard-wrapper {
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
     width: 100%;
 }
 
@@ -42,10 +48,9 @@ body {
 
 .navbar-container {
     width: 100%;
-    padding-right: var(--bs-gutter-x, 0.75rem);
-    padding-left: var(--bs-gutter-x, 0.75rem);
-    margin-right: auto;
-    margin-left: auto;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
     display: flex;
     align-items: center;
 }
@@ -76,7 +81,7 @@ body {
     flex: 1;
     padding: var(--spacing-lg);
     max-width: 100%;
-    background-color: #f8f9fa;
+    background-color: var(--gray-100);
 }
 
 /* Cards e elementos */
@@ -90,25 +95,94 @@ body {
     transform: translateY(-2px);
 }
 
+/* Status Cards */
+.status-card {
+    border-radius: 8px;
+    padding: 1.5rem;
+    height: 100%;
+}
+
+/* Table Styling */
+.table {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.table th {
+    border-bottom-width: 1px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--gray-600);
+    padding: 1rem;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.status-badge.confirmada {
+    background-color: var(--success-light);
+    color: var(--success-color);
+}
+
+.status-badge.check-in-proximo {
+    background-color: #FEF3C7;
+    color: var(--warning-color);
+}
+
+/* Mobile Card View */
+@media (max-width: 767px) {
+    .mobile-card {
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    
+    .mobile-card:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Statistics Cards */
+.stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.stat-card .card-title {
+    color: var(--gray-900);
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.stat-card .card-subtitle {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 /* Tabela */
 .table-responsive {
     margin-bottom: var(--spacing-lg);
     border-radius: 8px;
     background-color: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.table th {
-    border-top: none;
-    background-color: #f8f9fa;
-    font-weight: 600;
-    color: #495057;
-    padding: var(--spacing-md);
-}
-
-.table td {
-    vertical-align: middle;
-    padding: var(--spacing-md);
 }
 
 /* Botões e badges */

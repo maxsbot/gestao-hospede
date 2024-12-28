@@ -5,10 +5,125 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
+:root {
+    --primary-color: #6B46C1;
+    --primary-dark: #553C9A;
+    --primary-light: #9F7AEA;
+    --success-color: #38A169;
+    --success-light: #C6F6D5;
+    --warning-color: #D69E2E;
+    --danger-color: #E53E3E;
+    --gray-100: #F7FAFC;
+    --gray-200: #EDF2F7;
+    --gray-300: #E2E8F0;
+    --gray-400: #CBD5E0;
+    --gray-500: #A0AEC0;
+    --gray-600: #718096;
+    --gray-700: #4A5568;
+    --gray-800: #2D3748;
+    --gray-900: #1A202C;
+}
+
 body {
-    background-color: #f7f7f7;
+    background-color: var(--gray-100);
+    color: var(--gray-800);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Navbar Styling */
+.navbar.bg-purple {
+    background-color: var(--primary-color) !important;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: #fff;
+}
+
+/* Cards Styling */
+.card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.card:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+}
+
+/* Status Badges */
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+/* Navigation Tabs */
+.nav-tabs {
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: var(--gray-600);
+    padding: 0.75rem 1rem;
+    margin-bottom: -2px;
+    transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    border: none;
+    color: var(--primary-color);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    background: transparent;
+}
+
+/* Buttons */
+.btn-outline-light {
+    border-width: 2px;
+}
+
+.btn-outline-secondary {
+    color: var(--gray-700);
+    border-color: var(--gray-300);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--gray-100);
+    color: var(--gray-900);
+    border-color: var(--gray-400);
+}
+
+/* Floating Action Button */
+.fab-button {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    text-decoration: none;
+}
+
+.fab-button:hover {
+    background-color: var(--primary-dark);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    color: white;
+    transform: translateY(-2px);
 }

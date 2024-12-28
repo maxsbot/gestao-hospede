@@ -14,7 +14,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='your-secret-key-here')
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+# Configure DEBUG baseado no ambiente
+DEBUG = config('ENVIRONMENT', default='development') == 'development'
 
 ALLOWED_HOSTS = [ 'localhost', '127.0.0.1', 'gestao-hospede.up.railway.app' ]
 
@@ -123,7 +124,11 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Configure o storage baseado no ambiente
+if ENVIRONMENT == 'production':
+    # Configuração para produção
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = 'media/'

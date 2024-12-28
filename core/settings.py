@@ -16,7 +16,7 @@ SECRET_KEY = config('SECRET_KEY', default='your-secret-key-here')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+ALLOWED_HOSTS = [ 'localhost', '127.0.0.1', 'gestao-hospede.up.railway.app' ]
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [ 'https://gestao-hospede.up.railway.app' ]

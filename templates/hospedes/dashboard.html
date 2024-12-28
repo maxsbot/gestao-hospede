@@ -66,16 +66,16 @@
                 <div class="col-md-4 mb-3">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h6 class="card-subtitle mb-2 text-muted">Check-ins Hoje</h6>
-                            <h2 class="card-title mb-0">{{ reservas_hoje }}</h2>
+                            <h6 class="card-subtitle mb-2 text-muted">Reservas Programadas</h6>
+                            <h2 class="card-title mb-0">{{ reservas_programadas }}</h2>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="card h-100">
-                        <div class="card-body">
-                            <h6 class="card-subtitle mb-2 text-muted">Check-outs Hoje</h6>
-                            <h2 class="card-title mb-0">{{ checkout_hoje }}</h2>
+                        <div class="card-body bg-success bg-opacity-10 border-success border-opacity-25">
+                            <h6 class="card-subtitle mb-2 text-success">Receitas Programadas</h6>
+                            <h2 class="card-title mb-0 text-success">R$ {{ receitas_programadas|floatformat:2|intcomma }}</h2>
                         </div>
                     </div>
                 </div>

@@ -5,7 +5,7 @@ from django.views.generic import View, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, F
 from .models import Reserva
 from .services import AirbnbCSVImporter
 from datetime import datetime, timedelta
@@ -38,6 +38,19 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # Estatísticas para os cards
         context['total_reservas'] = Reserva.objects.count()
+        
+        # Reservas programadas e suas receitas
+        reservas_programadas = Reserva.objects.filter(
+            status='CONFIRMADA',
+            data_entrada__gte=hoje
+        )
+        context['reservas_programadas'] = reservas_programadas.count()
+        
+        # Calcula o total somando valor_bruto + taxa_servico + taxa_limpeza - impostos
+        context['receitas_programadas'] = reservas_programadas.aggregate(
+            total=Sum(F('valor_bruto') + F('taxa_servico') + F('taxa_limpeza') - F('impostos'))
+        )['total'] or 0
+        
         context['reservas_hoje'] = Reserva.objects.filter(
             data_entrada=hoje
         ).count()

@@ -147,35 +147,45 @@ class ImportarCSVAirbnbView(LoginRequiredMixin, View):
 
 def importar_csv(request):
     if request.method == 'POST' and request.FILES.get('csv_file'):
-        csv_file = request.FILES['csv_file']
-        
-        # Salva o arquivo temporariamente
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            for chunk in csv_file.chunks():
-                temp_file.write(chunk)
-        
         try:
+            csv_file = request.FILES['csv_file']
+            
+            # Salva o arquivo temporariamente
+            temp_file_path = os.path.join(tempfile.gettempdir(), csv_file.name)
+            with open(temp_file_path, 'wb+') as destination:
+                for chunk in csv_file.chunks():
+                    destination.write(chunk)
+            
+            # Processa o arquivo
             importer = AirbnbCSVImporter()
-            result = importer.import_csv(temp_file.name)
+            resultado = importer.import_csv(temp_file_path)
             
             # Remove o arquivo temporário
-            os.unlink(temp_file.name)
+            os.remove(temp_file_path)
             
+            # Se houver erros, retorna eles
+            if resultado['errors']:
+                return JsonResponse({
+                    'success': False,
+                    'error': f"Erro ao importar: {resultado['errors'][0]}. {resultado['imported']} reservas foram importadas com sucesso."
+                })
+            
+            # Se tudo deu certo
             return JsonResponse({
-                'success': result['success'],
-                'message': f'Importação concluída! {result["imported"]} registros importados.',
-                'errors': result['errors']
+                'success': True,
+                'message': f"{resultado['imported']} reservas foram importadas."
             })
             
         except Exception as e:
             return JsonResponse({
                 'success': False,
-                'message': f'Erro durante a importação: {str(e)}',
-                'errors': [str(e)]
-            }, status=500)
-            
-    return render(request, 'hospedes/importar_csv.html')
-
+                'error': f"Erro inesperado: {str(e)}"
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'error': 'Nenhum arquivo foi enviado. Por favor, selecione um arquivo CSV.'
+    })
 
 class CriarReservaView(LoginRequiredMixin, TemplateView):
     template_name = 'hospedes/criar_reserva.html'

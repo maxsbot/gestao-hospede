@@ -24,7 +24,7 @@
                         <a class="nav-link active" href="{% url 'hospedes:dashboard' %}">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'hospedes:importar_csv' %}">Importar CSV</a>
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#importModal">Importar CSV</a>
                     </li>
                 </ul>
                 
@@ -272,6 +272,50 @@
         </div>
     </main>
 
+    <!-- Modal de Importação -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Importar Arquivo CSV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="csvImportForm" method="post" enctype="multipart/form-data" action="{% url 'hospedes:importar_csv' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="csv_file" class="form-label">Selecione o arquivo CSV</label>
+                            <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                        </div>
+                        <div class="alert alert-info">
+                            <p class="mb-2">O arquivo CSV deve conter as seguintes colunas:</p>
+                            <ul class="mb-0">
+                                <li>Código de confirmação</li>
+                                <li>Status</li>
+                                <li>Nome do hóspede</li>
+                                <li>Entrar em contato</li>
+                                <li>Nº de adultos</li>
+                                <li>Nº de crianças</li>
+                                <li>Nº de bebês</li>
+                                <li>Data de início</li>
+                                <li>Data de término</li>
+                                <li>Nº de noites</li>
+                                <li>Reservado</li>
+                                <li>Anúncio</li>
+                                <li>Ganhos</li>
+                            </ul>
+                        </div>
+                        <div id="importStatus" class="alert" style="display: none;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="submitImport">Importar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Action Button -->
     <a href="{% url 'hospedes:criar_reserva' %}" class="fab-button" title="Nova Reserva">
         <i class="bi bi-plus-lg"></i>
@@ -281,6 +325,69 @@
 
 {% block extra_js %}
 <script>
-    // Adicione aqui qualquer JavaScript necessário
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitImport = document.getElementById('submitImport');
+        const importStatus = document.getElementById('importStatus');
+        const csvForm = document.getElementById('csvImportForm');
+        
+        submitImport.addEventListener('click', function() {
+            const formData = new FormData(csvForm);
+            
+            // Desabilita o botão durante o envio
+            submitImport.disabled = true;
+            submitImport.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Importando...';
+            
+            // Limpa status anterior
+            importStatus.style.display = 'none';
+            importStatus.className = 'alert';
+            
+            fetch('{% url "hospedes:importar_csv" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                importStatus.style.display = 'block';
+                if (data.success) {
+                    importStatus.className = 'alert alert-success';
+                    importStatus.innerHTML = `
+                        <h6 class="alert-heading mb-2">Importação concluída com sucesso!</h6>
+                        <p class="mb-0">${data.message}</p>
+                    `;
+                    // Recarrega a página após 2 segundos
+                    setTimeout(() => window.location.reload(), 9000);
+                } else {
+                    importStatus.className = 'alert alert-danger';
+                    importStatus.innerHTML = `
+                        <h6 class="alert-heading mb-2">Erro na importação</h6>
+                        <p class="mb-0">${data.error}</p>
+                    `;
+                }
+            })
+            .catch(error => {
+                importStatus.style.display = 'block';
+                importStatus.className = 'alert alert-danger';
+                importStatus.innerHTML = `
+                    <h6 class="alert-heading mb-2">Erro na importação</h6>
+                    <p class="mb-0">Erro ao enviar arquivo. Tente novamente.</p>
+                `;
+            })
+            .finally(() => {
+                // Reabilita o botão
+                submitImport.disabled = false;
+                submitImport.innerHTML = 'Importar';
+            });
+        });
+        
+        // Limpa o formulário quando o modal é fechado
+        const importModal = document.getElementById('importModal');
+        importModal.addEventListener('hidden.bs.modal', function () {
+            csvForm.reset();
+            importStatus.style.display = 'none';
+        });
+    });
 </script>
 {% endblock %}

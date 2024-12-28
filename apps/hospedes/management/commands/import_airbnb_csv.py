@@ -28,7 +28,7 @@ class Command(BaseCommand):
             if result['success']:
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f'Importação concluída com sucesso! {result["imported"]} registros importados.'
+                        f'{result["imported"]} registros importados.'
                     )
                 )
             

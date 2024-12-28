@@ -145,9 +145,11 @@
                             <td>{{ reserva.codigo_confirmacao }}</td>
                             <td>R$ {{ reserva.valor_bruto.amount|floatformat:2 }}</td>
                             <td class="text-end">
-                                <a href="#" class="btn btn-sm btn-outline-success me-1" title="WhatsApp">
+                                {% if reserva.whatsapp_link %}
+                                <a href="{{ reserva.whatsapp_link }}" class="btn btn-sm btn-outline-success me-1" title="WhatsApp" target="_blank">
                                     <i class="bi bi-whatsapp"></i>
                                 </a>
+                                {% endif %}
                                 <a href="#" class="btn btn-sm btn-outline-primary" title="Editar">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
@@ -174,9 +176,11 @@
                                 {{ reserva.calcular_status.texto }}
                             </span>
                             <div class="actions" onclick="event.stopPropagation();">
-                                <a href="#" class="btn btn-sm btn-outline-success me-1" title="WhatsApp">
+                                {% if reserva.whatsapp_link %}
+                                <a href="{{ reserva.whatsapp_link }}" class="btn btn-sm btn-outline-success me-1" title="WhatsApp" target="_blank">
                                     <i class="bi bi-whatsapp"></i>
                                 </a>
+                                {% endif %}
                                 <a href="#" class="btn btn-sm btn-outline-primary" title="Editar">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
@@ -204,9 +208,11 @@
                                         {{ reserva.calcular_status.texto }}
                                     </span>
                                     <div>
-                                        <a href="#" class="btn btn-sm btn-outline-success me-1" title="WhatsApp">
+                                        {% if reserva.whatsapp_link %}
+                                        <a href="{{ reserva.whatsapp_link }}" class="btn btn-sm btn-outline-success me-1" title="WhatsApp" target="_blank">
                                             <i class="bi bi-whatsapp"></i>
                                         </a>
+                                        {% endif %}
                                         <a href="#" class="btn btn-sm btn-outline-primary" title="Editar">
                                             <i class="bi bi-pencil-square"></i>
                                         </a>
